@@ -1,4 +1,6 @@
-from constants import DUMMY_PASSWORD, SPECIAL_CHARS
+import constants
+from multi_process import MultiProcess
+import multiprocessing
 
 class PasswordsGenerator:
     def __init__(self, *, dummy_password:str=DUMMY_PASSWORD) -> None:
@@ -45,7 +47,7 @@ class PasswordsGenerator:
         else:
             return SPECIAL_CHARS[SPECIAL_CHARS.index(word)+1]
 
-    def setup_format_of_password(self) -> str:
+    def get_first_password(self) -> str:
         if self.current_password:
             raise ValueError("password format or first password is already genrated", f"{self.current_password=}")
         for each_word in self.dummy_password:
@@ -58,4 +60,55 @@ class PasswordsGenerator:
         print("Password generator is successfully setup and current password trying is --> ", self.current_password)
         self.pointer = len(self.current_password)-1
         return self.current_password
+    
+
+class PasswordsGeneratorCPU(MultiProcess):
+    def __init__(self, dummy_password: str) -> None:
+        self.dummy_password = dummy_password
+        self.first_password = self.__get_first_password()
+        super().__init__(first_password=self.first_password)
+        self.chunk_type = self.get_chunk_type()
+        self.chunks_list = self.chunks.get(self.chunk_type)
+
+    def __get_first_password(self) -> str:
+        for each_word in self.dummy_password:
+            if each_word.isnumeric():
+                self.first_password+= "0"
+            elif each_word.isalpha():
+                self.first_password+= 'a'
+            else:
+                self.first_password+= SPECIAL_CHARS[0]
+        print("Password generator is successfully setup and current password trying is --> ", self.first_password)
+        self.pointer = len(self.first_password)-1
+        return self.first_password
+    
+    def get_chunk_type(self):
+        if self.chunks.get(constants.ALPHABETS):
+            return constants.ALPHABETS
+        elif self.chunks.get(constants.NUMBERS):
+            return constants.NUMBERS
+        else:
+            return constants.SPECIAL_CHARS
+
+
+    def generate_processor_first_password(self, chunks):
+        first_password = self.first_password
+        self.first_password = {}
+        def update_first_password(chunk:list):
+            first_chunk_word = chunk[0]
+            first_updated_password = ""
+            for each_word in first_password:
+                if (each_word.isalpha() and self.chunk_type == constants.ALPHABETS) or \
+                    (each_word.isnumeric() and self.chunk_type == constants.NUMBERS) or \
+                    (each_word in constants.SPECIAL_CHARS_LIST and self.chunk_type == constants.SPECIAL_CHARS):
+                    first_updated_password+=first_chunk_word
+                else:
+                    first_updated_password+=each_word
+            return first_updated_password, chunk
+        pool = multiprocessing.Pool(processes=self.cpu_count)
+        new_passwords = pool.map_async(update_first_password, chunks)
+        return list(new_passwords)
+
+
+        
     
