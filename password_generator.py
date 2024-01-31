@@ -3,7 +3,7 @@ from multi_process import MultiProcess
 import multiprocessing
 
 class PasswordsGenerator:
-    def __init__(self, *, dummy_password:str=DUMMY_PASSWORD) -> None:
+    def __init__(self, *, dummy_password:str=constants.DUMMY_PASSWORD) -> None:
         if not dummy_password:
             dummy_password = ''
         self.dummy_password = dummy_password
@@ -45,7 +45,7 @@ class PasswordsGenerator:
         if word.isnumeric():
             return str(int(word)+1)
         else:
-            return SPECIAL_CHARS[SPECIAL_CHARS.index(word)+1]
+            return constants.SPECIAL_CHARS_LIST[constants.SPECIAL_CHARS_LIST.index(word)+1]
 
     def get_first_password(self) -> str:
         if self.current_password:
@@ -56,7 +56,7 @@ class PasswordsGenerator:
             elif each_word.isalpha():
                 self.current_password+= 'a'
             else:
-                self.current_password+= SPECIAL_CHARS[0]
+                self.current_password+= constants.SPECIAL_CHARS_LIST[0]
         print("Password generator is successfully setup and current password trying is --> ", self.current_password)
         self.pointer = len(self.current_password)-1
         return self.current_password
@@ -77,7 +77,7 @@ class PasswordsGeneratorCPU(MultiProcess):
             elif each_word.isalpha():
                 self.first_password+= 'a'
             else:
-                self.first_password+= SPECIAL_CHARS[0]
+                self.first_password+= constants.SPECIAL_CHARS_LIST[0]
         print("Password generator is successfully setup and current password trying is --> ", self.first_password)
         self.pointer = len(self.first_password)-1
         return self.first_password
